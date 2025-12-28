@@ -1,0 +1,26 @@
+[package]
+name = "session-dialog"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Alessio Deiana <adeiana@gmail.com>"]
+description = "Wayland session-lock confirmation dialogs"
+
+[dependencies]
+iced = { version = "0.13", features = ["tokio"] }
+iced_sessionlock = "0.13"
+serde = { version = "1", features = ["derive"] }
+rmp-serde = "1"
+thiserror = "2"
+
+[[bin]]
+name = "session-dialog"
+path = "src/bin/dialog.rs"
+
+[[bin]]
+name = "test-inline"
+path = "src/bin/test_inline.rs"
+
+[lib]
+name = "session_dialog"
+path = "src/lib.rs"
