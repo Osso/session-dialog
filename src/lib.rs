@@ -216,8 +216,11 @@ pub fn run_dialog(config: DialogConfig) -> ! {
 /// # Note
 /// This works even when running as root, as long as the Wayland env vars are correct.
 pub fn show_dialog_inline(config: DialogConfig, env: &std::collections::HashMap<String, String>) -> DialogResult {
-    // Set Wayland env vars
+    // Force Wayland backend, skip X11 fallback
     // SAFETY: We're single-threaded at this point or the caller ensures thread safety
+    unsafe { std::env::set_var("WINIT_UNIX_BACKEND", "wayland") };
+
+    // Set Wayland env vars
     for key in WAYLAND_ENV_VARS {
         if let Some(val) = env.get(*key) {
             unsafe { std::env::set_var(key, val) };

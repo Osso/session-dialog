@@ -7,6 +7,9 @@ use session_dialog::{base64_decode, run_dialog, DialogConfig};
 use std::env;
 
 fn main() {
+    // Force Wayland backend, skip X11 fallback
+    // SAFETY: Called before any threads are spawned
+    unsafe { std::env::set_var("WINIT_UNIX_BACKEND", "wayland") };
     let args: Vec<String> = env::args().collect();
 
     // Parse --config argument
