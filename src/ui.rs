@@ -4,12 +4,12 @@ use crate::DialogConfig;
 use iced::border::Radius;
 use iced::keyboard::{self, Key};
 use iced::theme::Palette;
-use iced::widget::{column, container, horizontal_rule, row, text};
+use iced::widget::{column, container, row, rule, text};
 use iced::window::Id;
 use iced::Color;
 use iced::{Element, Event, Subscription, Task, Theme};
-use iced_sessionlock::build_pattern::application;
-use iced_sessionlock::to_session_message;
+use iced_sessionlock::actions::UnLockAction;
+use iced_sessionlock::application;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::OnceLock;
 
@@ -26,10 +26,9 @@ static EXIT_CODE: AtomicI32 = AtomicI32::new(1); // Default: denied
 pub fn run(config: DialogConfig) -> i32 {
     let _ = CONFIG.set(config);
 
-    let result = application(App::update, App::view)
-        .theme(App::theme)
+    let result = application(App::new, App::update, App::view)
         .subscription(App::subscription)
-        .run_with(App::new);
+        .run();
 
     match result {
         Ok(()) => EXIT_CODE.load(Ordering::SeqCst),
@@ -41,11 +40,21 @@ struct App {
     start_time: std::time::Instant,
 }
 
-#[to_session_message]
 #[derive(Debug, Clone)]
 enum Message {
     Event(Event),
     Tick,
+    UnLock,
+}
+
+impl TryInto<UnLockAction> for Message {
+    type Error = Self;
+    fn try_into(self) -> Result<UnLockAction, Self::Error> {
+        if let Self::UnLock = self {
+            return Ok(UnLockAction);
+        }
+        Err(self)
+    }
 }
 
 impl App {
@@ -58,11 +67,7 @@ impl App {
         )
     }
 
-    fn theme(_: &Self) -> Theme {
-        ayu_dark_theme()
-    }
-
-    fn subscription(_: &Self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<Message> {
         let events = iced::event::listen().map(Message::Event);
 
         // Check timeout if configured
@@ -103,6 +108,7 @@ impl App {
                 }
                 Task::none()
             }
+            Message::UnLock => Task::done(Message::UnLock),
             _ => Task::none(),
         }
     }
@@ -124,7 +130,7 @@ impl App {
         // Show timeout if configured
         let mut content_items: Vec<Element<'_, Message>> = vec![
             title.into(),
-            horizontal_rule(1).into(),
+            rule::horizontal(1).into(),
             subtitle.into(),
             detail.into(),
         ];
@@ -167,6 +173,7 @@ fn ayu_dark_theme() -> Theme {
             primary: Color::from_rgb8(0xE6, 0xB4, 0x50),
             success: Color::from_rgb8(0xAA, 0xD9, 0x4C),
             danger: Color::from_rgb8(0xD9, 0x57, 0x57),
+            warning: Color::from_rgb8(0xE6, 0xB4, 0x50),
         },
     )
 }

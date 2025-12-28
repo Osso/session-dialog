@@ -7,8 +7,8 @@ authors = ["Alessio Deiana <adeiana@gmail.com>"]
 description = "Wayland session-lock confirmation dialogs"
 
 [dependencies]
-iced = { version = "0.13", features = ["tokio"] }
-iced_sessionlock = "0.13"
+iced = { version = "0.14", default-features = false, features = ["wgpu", "tiny-skia", "tokio", "wayland"] }
+iced_sessionlock = { path = "/home/osso/Repos/exwlshelleventloop/iced_sessionlock", default-features = false, features = ["tiny-skia", "wgpu", "fira-sans"] }
 serde = { version = "1", features = ["derive"] }
 rmp-serde = "1"
 thiserror = "2"
