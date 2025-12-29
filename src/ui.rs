@@ -11,9 +11,9 @@ use iced::{Element, Event, Subscription, Task, Theme};
 use iced_sessionlock::actions::UnLockAction;
 use iced_sessionlock::application;
 use std::sync::atomic::{AtomicI32, Ordering};
-use std::sync::OnceLock;
+use std::sync::Mutex;
 
-static CONFIG: OnceLock<DialogConfig> = OnceLock::new();
+static CONFIG: Mutex<Option<DialogConfig>> = Mutex::new(None);
 static EXIT_CODE: AtomicI32 = AtomicI32::new(1); // Default: denied
 
 /// Run the dialog UI and return exit code
@@ -24,7 +24,7 @@ static EXIT_CODE: AtomicI32 = AtomicI32::new(1); // Default: denied
 /// - 2: Timeout
 /// - 3: Error
 pub fn run(config: DialogConfig) -> i32 {
-    let _ = CONFIG.set(config);
+    *CONFIG.lock().unwrap() = Some(config);
 
     let result = application(App::new, App::update, App::view)
         .subscription(App::subscription)
@@ -71,12 +71,17 @@ impl App {
         let events = iced::event::listen().map(Message::Event);
 
         // Check timeout if configured
-        if let Some(config) = CONFIG.get() {
-            if config.timeout_secs.is_some() {
-                let tick = iced::time::every(std::time::Duration::from_secs(1))
-                    .map(|_| Message::Tick);
-                return Subscription::batch([events, tick]);
-            }
+        let has_timeout = CONFIG
+            .lock()
+            .unwrap()
+            .as_ref()
+            .and_then(|c| c.timeout_secs)
+            .is_some();
+
+        if has_timeout {
+            let tick =
+                iced::time::every(std::time::Duration::from_secs(1)).map(|_| Message::Tick);
+            return Subscription::batch([events, tick]);
         }
 
         events
@@ -98,12 +103,11 @@ impl App {
                 }
             }
             Message::Tick => {
-                if let Some(config) = CONFIG.get() {
-                    if let Some(timeout) = config.timeout_secs {
-                        if self.start_time.elapsed().as_secs() >= timeout as u64 {
-                            EXIT_CODE.store(2, Ordering::SeqCst); // Timeout
-                            return Task::done(Message::UnLock);
-                        }
+                let timeout = CONFIG.lock().unwrap().as_ref().and_then(|c| c.timeout_secs);
+                if let Some(timeout) = timeout {
+                    if self.start_time.elapsed().as_secs() >= timeout as u64 {
+                        EXIT_CODE.store(2, Ordering::SeqCst); // Timeout
+                        return Task::done(Message::UnLock);
                     }
                 }
                 Task::none()
@@ -114,12 +118,23 @@ impl App {
     }
 
     fn view(&self, _id: Id) -> Element<'_, Message> {
-        let config = CONFIG.get().expect("config not set");
+        // Clone what we need from config while holding lock briefly
+        let (title_str, subtitle_str, detail_str, timeout_secs) = {
+            let guard = CONFIG.lock().unwrap();
+            let config = guard.as_ref().expect("config not set");
+            (
+                config.title().to_string(),
+                config.subtitle().to_string(),
+                config.detail(),
+                config.timeout_secs,
+            )
+        };
+
         let theme = ayu_dark_theme();
 
-        let title = text(config.title()).size(48);
-        let subtitle = text(config.subtitle()).size(28);
-        let detail = text(config.detail()).size(32);
+        let title = text(title_str).size(48);
+        let subtitle = text(subtitle_str).size(28);
+        let detail = text(detail_str).size(32);
 
         let actions = row![
             text("[Enter] Allow").size(32).color(theme.palette().success),
@@ -135,7 +150,7 @@ impl App {
             detail.into(),
         ];
 
-        if let Some(timeout) = config.timeout_secs {
+        if let Some(timeout) = timeout_secs {
             let elapsed = self.start_time.elapsed().as_secs() as u32;
             let remaining = timeout.saturating_sub(elapsed);
             let timeout_text = text(format!("Auto-deny in {}s", remaining))
