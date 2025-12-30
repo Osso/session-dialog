@@ -8,8 +8,9 @@
 //!
 //! For daemons that need to show confirmation dialogs:
 //!
-//! ```no_run
+//! ```ignore
 //! use session_dialog::{DialogConfig, DialogKind, show_dialog};
+//! use std::collections::HashMap;
 //!
 //! let config = DialogConfig {
 //!     kind: DialogKind::PrivilegeEscalation {
@@ -18,7 +19,8 @@
 //!     timeout_secs: None,
 //! };
 //!
-//! let result = show_dialog(&config, 1000, 1000, &wayland_env);
+//! let env: HashMap<String, String> = HashMap::new();
+//! let result = show_dialog(&config, 1000, 1000, &env);
 //! ```
 
 mod ui;
