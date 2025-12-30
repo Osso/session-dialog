@@ -79,8 +79,7 @@ impl App {
             .is_some();
 
         if has_timeout {
-            let tick =
-                iced::time::every(std::time::Duration::from_secs(1)).map(|_| Message::Tick);
+            let tick = iced::time::every(std::time::Duration::from_secs(1)).map(|_| Message::Tick);
             return Subscription::batch([events, tick]);
         }
 
@@ -137,7 +136,9 @@ impl App {
         let detail = text(detail_str).size(32);
 
         let actions = row![
-            text("[Enter] Allow").size(32).color(theme.palette().success),
+            text("[Enter] Allow")
+                .size(32)
+                .color(theme.palette().success),
             text("[Esc] Deny").size(32).color(theme.palette().danger),
         ]
         .spacing(30);

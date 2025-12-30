@@ -1,6 +1,6 @@
 //! Test show_dialog_inline
 
-use session_dialog::{DialogConfig, DialogKind, show_dialog_inline};
+use session_dialog::{show_dialog_inline, DialogConfig, DialogKind};
 use std::collections::HashMap;
 
 fn main() {

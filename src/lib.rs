@@ -180,14 +180,12 @@ pub fn show_dialog(
         .status();
 
     match result {
-        Ok(status) => {
-            match status.code() {
-                Some(0) => DialogResult::Confirmed,
-                Some(1) => DialogResult::Denied,
-                Some(2) => DialogResult::Timeout,
-                _ => DialogResult::Error,
-            }
-        }
+        Ok(status) => match status.code() {
+            Some(0) => DialogResult::Confirmed,
+            Some(1) => DialogResult::Denied,
+            Some(2) => DialogResult::Timeout,
+            _ => DialogResult::Error,
+        },
         Err(_) => DialogResult::Error,
     }
 }
@@ -215,7 +213,10 @@ pub fn run_dialog(config: DialogConfig) -> ! {
 ///
 /// # Note
 /// This works even when running as root, as long as the Wayland env vars are correct.
-pub fn show_dialog_inline(config: DialogConfig, env: &std::collections::HashMap<String, String>) -> DialogResult {
+pub fn show_dialog_inline(
+    config: DialogConfig,
+    env: &std::collections::HashMap<String, String>,
+) -> DialogResult {
     // Force Wayland backend, skip X11 fallback
     // SAFETY: We're single-threaded at this point or the caller ensures thread safety
     unsafe { std::env::set_var("WINIT_UNIX_BACKEND", "wayland") };
@@ -311,7 +312,11 @@ struct Base64Encoder<'a> {
 
 impl<'a> Base64Encoder<'a> {
     fn new(buf: &'a mut Vec<u8>) -> Self {
-        Self { buf, pending: 0, pending_bits: 0 }
+        Self {
+            buf,
+            pending: 0,
+            pending_bits: 0,
+        }
     }
 
     fn flush_pending(&mut self) {
