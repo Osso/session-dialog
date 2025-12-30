@@ -965,6 +965,7 @@ dependencies = [
 [[package]]
 name = "iced_exdevtools"
 version = "0.14.2"
+source = "git+https://github.com/Osso/exwlshelleventloop#dce2967fb1a3756bcab5bda4297400aa994b7952"
 dependencies = [
  "iced_debug",
  "iced_devtools",
@@ -1046,6 +1047,7 @@ dependencies = [
 [[package]]
 name = "iced_sessionlock"
 version = "0.14.2"
+source = "git+https://github.com/Osso/exwlshelleventloop#dce2967fb1a3756bcab5bda4297400aa994b7952"
 dependencies = [
  "futures",
  "iced",
@@ -1067,6 +1069,7 @@ dependencies = [
 [[package]]
 name = "iced_sessionlock_macros"
 version = "0.14.2"
+source = "git+https://github.com/Osso/exwlshelleventloop#dce2967fb1a3756bcab5bda4297400aa994b7952"
 dependencies = [
  "darling",
  "manyhow",
@@ -2155,6 +2158,7 @@ dependencies = [
 [[package]]
 name = "sessionlockev"
 version = "0.14.2"
+source = "git+https://github.com/Osso/exwlshelleventloop#dce2967fb1a3756bcab5bda4297400aa994b7952"
 dependencies = [
  "bitflags 2.10.0",
  "calloop 0.14.3",
@@ -2691,6 +2695,7 @@ dependencies = [
 [[package]]
 name = "waycrate_xkbkeycode"
 version = "0.14.2"
+source = "git+https://github.com/Osso/exwlshelleventloop#dce2967fb1a3756bcab5bda4297400aa994b7952"
 dependencies = [
  "bitflags 2.10.0",
  "calloop 0.14.3",
