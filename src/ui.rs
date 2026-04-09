@@ -117,7 +117,6 @@ impl App {
     }
 
     fn view(&self, _id: Id) -> Element<'_, Message> {
-        // Clone what we need from config while holding lock briefly
         let (title_str, subtitle_str, detail_str, timeout_secs) = {
             let guard = CONFIG.lock().unwrap();
             let config = guard.as_ref().expect("config not set");
@@ -130,39 +129,16 @@ impl App {
         };
 
         let theme = ayu_dark_theme();
-
-        let title = text(title_str).size(48);
-        let subtitle = text(subtitle_str).size(28);
-        let detail = text(detail_str).size(32);
-
-        let actions = row![
-            text("[Enter] Allow")
-                .size(32)
-                .color(theme.palette().success),
-            text("[Esc] Deny").size(32).color(theme.palette().danger),
-        ]
-        .spacing(30);
-
-        // Show timeout if configured
-        let mut content_items: Vec<Element<'_, Message>> = vec![
-            title.into(),
-            rule::horizontal(1).into(),
-            subtitle.into(),
-            detail.into(),
-        ];
-
-        if let Some(timeout) = timeout_secs {
-            let elapsed = self.start_time.elapsed().as_secs() as u32;
-            let remaining = timeout.saturating_sub(elapsed);
-            let timeout_text = text(format!("Auto-deny in {}s", remaining))
-                .size(24)
-                .color(theme.palette().danger);
-            content_items.push(timeout_text.into());
-        }
-
-        content_items.push(actions.into());
-
-        let content = column(content_items).spacing(16).padding(30);
+        let elapsed_secs = self.start_time.elapsed().as_secs() as u32;
+        let items = build_content_items(
+            &theme,
+            &title_str,
+            &subtitle_str,
+            &detail_str,
+            timeout_secs,
+            elapsed_secs,
+        );
+        let content = column(items).spacing(16).padding(30);
 
         container(content)
             .center_x(iced::Length::Fill)
@@ -178,6 +154,43 @@ impl App {
             })
             .into()
     }
+}
+
+fn build_content_items<'a>(
+    theme: &Theme,
+    title_str: &str,
+    subtitle_str: &str,
+    detail_str: &str,
+    timeout_secs: Option<u32>,
+    elapsed_secs: u32,
+) -> Vec<Element<'a, Message>> {
+    let actions = row![
+        text("[Enter] Allow")
+            .size(32)
+            .color(theme.palette().success),
+        text("[Esc] Deny").size(32).color(theme.palette().danger),
+    ]
+    .spacing(30);
+
+    let mut items: Vec<Element<'a, Message>> = vec![
+        text(title_str.to_string()).size(48).into(),
+        rule::horizontal(1).into(),
+        text(subtitle_str.to_string()).size(28).into(),
+        text(detail_str.to_string()).size(32).into(),
+    ];
+
+    if let Some(timeout) = timeout_secs {
+        let remaining = timeout.saturating_sub(elapsed_secs);
+        items.push(
+            text(format!("Auto-deny in {}s", remaining))
+                .size(24)
+                .color(theme.palette().danger)
+                .into(),
+        );
+    }
+
+    items.push(actions.into());
+    items
 }
 
 fn ayu_dark_theme() -> Theme {
