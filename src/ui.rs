@@ -16,7 +16,7 @@ static CONFIG: Mutex<Option<DialogConfig>> = Mutex::new(None);
 static EXIT_CODE: AtomicI32 = AtomicI32::new(1); // Default: denied
 
 // Ayu Dark palette
-const SCRIM: Color = Color::from_rgba8(0x05, 0x08, 0x0D, 0.94);
+const SCRIM: Color = Color::from_rgb8(0x05, 0x08, 0x0D);
 const CARD_BG: Color = Color::from_rgb8(0x0F, 0x13, 0x1A);
 const CARD_BORDER: Color = Color::from_rgb8(0x1C, 0x22, 0x2C);
 const INSET_BG: Color = Color::from_rgb8(0x0A, 0x0D, 0x12);
@@ -29,7 +29,7 @@ const ACCENT: Color = Color::from_rgb8(0xE6, 0xB4, 0x50);
 const SUCCESS: Color = Color::from_rgb8(0xAA, 0xD9, 0x4C);
 const DANGER: Color = Color::from_rgb8(0xD9, 0x57, 0x57);
 
-const CARD_WIDTH: f32 = 600.0;
+const CARD_WIDTH: f32 = 700.0;
 
 /// Run the dialog UI and return exit code
 ///
@@ -152,10 +152,10 @@ impl App {
                 divider(),
                 footer(timeout_secs, elapsed_secs),
             ]
-            .spacing(20),
+            .spacing(22),
         )
         .width(Length::Fixed(CARD_WIDTH))
-        .padding(28)
+        .padding(32)
         .style(card_style);
 
         container(card)
@@ -172,13 +172,13 @@ impl App {
 fn header<'a>(title: &str, subtitle: &str) -> Element<'a, Message> {
     column![
         text(title.to_string())
-            .size(26)
+            .size(30)
             .font(Font {
                 weight: Weight::Bold,
                 ..Font::DEFAULT
             })
             .color(TEXT_PRIMARY),
-        text(subtitle.to_string()).size(16).color(TEXT_BODY),
+        text(subtitle.to_string()).size(18).color(TEXT_BODY),
     ]
     .spacing(8)
     .into()
@@ -187,13 +187,13 @@ fn header<'a>(title: &str, subtitle: &str) -> Element<'a, Message> {
 fn command_block<'a>(detail: &str) -> Element<'a, Message> {
     container(
         text(detail.to_string())
-            .size(17)
+            .size(19)
             .font(Font::MONOSPACE)
             .color(ACCENT)
             .wrapping(text::Wrapping::WordOrGlyph),
     )
     .width(Length::Fill)
-    .padding([14, 16])
+    .padding([16, 18])
     .style(|_theme| container::Style {
         background: Some(INSET_BG.into()),
         border: iced::Border {
@@ -218,10 +218,10 @@ fn divider<'a>() -> Element<'a, Message> {
 fn footer<'a>(timeout_secs: Option<u32>, elapsed_secs: u32) -> Element<'a, Message> {
     let mut footer = row![
         keycap("Enter"),
-        text("Allow").size(15).color(SUCCESS),
+        text("Allow").size(17).color(SUCCESS),
         Space::new().width(16),
         keycap("Esc"),
-        text("Deny").size(15).color(DANGER),
+        text("Deny").size(17).color(DANGER),
     ]
     .spacing(10)
     .align_y(Alignment::Center);
@@ -231,7 +231,7 @@ fn footer<'a>(timeout_secs: Option<u32>, elapsed_secs: u32) -> Element<'a, Messa
         let color = if remaining <= 5 { DANGER } else { TEXT_MUTED };
         footer = footer.push(Space::new().width(Length::Fill)).push(
             text(format!("Auto-deny in {}s", remaining))
-                .size(14)
+                .size(16)
                 .font(Font::MONOSPACE)
                 .color(color),
         );
@@ -241,8 +241,8 @@ fn footer<'a>(timeout_secs: Option<u32>, elapsed_secs: u32) -> Element<'a, Messa
 }
 
 fn keycap<'a>(label: &'static str) -> Element<'a, Message> {
-    container(text(label).size(13).font(Font::MONOSPACE).color(TEXT_BODY))
-        .padding([3, 9])
+    container(text(label).size(15).font(Font::MONOSPACE).color(TEXT_BODY))
+        .padding([4, 10])
         .style(|_theme| container::Style {
             background: Some(KEYCAP_BG.into()),
             border: iced::Border {
