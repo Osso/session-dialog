@@ -2,12 +2,11 @@
 
 use crate::DialogConfig;
 use iced::border::Radius;
+use iced::font::Weight;
 use iced::keyboard::{self, Key};
-use iced::theme::Palette;
-use iced::widget::{column, container, row, rule, text};
+use iced::widget::{column, container, row, text, Space};
 use iced::window::Id;
-use iced::Color;
-use iced::{Element, Event, Subscription, Task, Theme};
+use iced::{Alignment, Color, Element, Event, Font, Length, Subscription, Task};
 use iced_sessionlock::actions::UnLockAction;
 use iced_sessionlock::application;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -15,6 +14,22 @@ use std::sync::Mutex;
 
 static CONFIG: Mutex<Option<DialogConfig>> = Mutex::new(None);
 static EXIT_CODE: AtomicI32 = AtomicI32::new(1); // Default: denied
+
+// Ayu Dark palette
+const SCRIM: Color = Color::from_rgba8(0x05, 0x08, 0x0D, 0.94);
+const CARD_BG: Color = Color::from_rgb8(0x0F, 0x13, 0x1A);
+const CARD_BORDER: Color = Color::from_rgb8(0x1C, 0x22, 0x2C);
+const INSET_BG: Color = Color::from_rgb8(0x0A, 0x0D, 0x12);
+const KEYCAP_BG: Color = Color::from_rgb8(0x1A, 0x20, 0x2A);
+const KEYCAP_BORDER: Color = Color::from_rgb8(0x2B, 0x33, 0x40);
+const TEXT_PRIMARY: Color = Color::from_rgb8(0xE6, 0xE1, 0xCF);
+const TEXT_BODY: Color = Color::from_rgb8(0xBF, 0xBD, 0xB6);
+const TEXT_MUTED: Color = Color::from_rgb8(0x8A, 0x91, 0x99);
+const ACCENT: Color = Color::from_rgb8(0xE6, 0xB4, 0x50);
+const SUCCESS: Color = Color::from_rgb8(0xAA, 0xD9, 0x4C);
+const DANGER: Color = Color::from_rgb8(0xD9, 0x57, 0x57);
+
+const CARD_WIDTH: f32 = 600.0;
 
 /// Run the dialog UI and return exit code
 ///
@@ -117,7 +132,7 @@ impl App {
     }
 
     fn view(&self, _id: Id) -> Element<'_, Message> {
-        let (title_str, subtitle_str, detail_str, timeout_secs) = {
+        let (title, subtitle, detail, timeout_secs) = {
             let guard = CONFIG.lock().unwrap();
             let config = guard.as_ref().expect("config not set");
             (
@@ -128,81 +143,131 @@ impl App {
             )
         };
 
-        let theme = ayu_dark_theme();
         let elapsed_secs = self.start_time.elapsed().as_secs() as u32;
-        let items = build_content_items(
-            &theme,
-            &title_str,
-            &subtitle_str,
-            &detail_str,
-            timeout_secs,
-            elapsed_secs,
-        );
-        let content = column(items).spacing(16).padding(30);
 
-        container(content)
-            .center_x(iced::Length::Fill)
-            .center_y(iced::Length::Fill)
+        let card = container(
+            column![
+                header(&title, &subtitle),
+                command_block(&detail),
+                divider(),
+                footer(timeout_secs, elapsed_secs),
+            ]
+            .spacing(20),
+        )
+        .width(Length::Fixed(CARD_WIDTH))
+        .padding(28)
+        .style(card_style);
+
+        container(card)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
             .style(|_theme| container::Style {
-                background: Some(Color::from_rgba(0.05, 0.06, 0.08, 0.95).into()),
-                border: iced::Border {
-                    color: Color::from_rgb8(0x56, 0x5B, 0x66),
-                    width: 2.0,
-                    radius: Radius::from(16.0),
-                },
+                background: Some(SCRIM.into()),
                 ..Default::default()
             })
             .into()
     }
 }
 
-fn build_content_items<'a>(
-    theme: &Theme,
-    title_str: &str,
-    subtitle_str: &str,
-    detail_str: &str,
-    timeout_secs: Option<u32>,
-    elapsed_secs: u32,
-) -> Vec<Element<'a, Message>> {
-    let actions = row![
-        text("[Enter] Allow")
-            .size(32)
-            .color(theme.palette().success),
-        text("[Esc] Deny").size(32).color(theme.palette().danger),
+fn header<'a>(title: &str, subtitle: &str) -> Element<'a, Message> {
+    column![
+        text(title.to_string())
+            .size(26)
+            .font(Font {
+                weight: Weight::Bold,
+                ..Font::DEFAULT
+            })
+            .color(TEXT_PRIMARY),
+        text(subtitle.to_string()).size(16).color(TEXT_BODY),
     ]
-    .spacing(30);
+    .spacing(8)
+    .into()
+}
 
-    let mut items: Vec<Element<'a, Message>> = vec![
-        text(title_str.to_string()).size(48).into(),
-        rule::horizontal(1).into(),
-        text(subtitle_str.to_string()).size(28).into(),
-        text(detail_str.to_string()).size(32).into(),
-    ];
+fn command_block<'a>(detail: &str) -> Element<'a, Message> {
+    container(
+        text(detail.to_string())
+            .size(17)
+            .font(Font::MONOSPACE)
+            .color(ACCENT)
+            .wrapping(text::Wrapping::WordOrGlyph),
+    )
+    .width(Length::Fill)
+    .padding([14, 16])
+    .style(|_theme| container::Style {
+        background: Some(INSET_BG.into()),
+        border: iced::Border {
+            color: CARD_BORDER,
+            width: 1.0,
+            radius: Radius::from(8.0),
+        },
+        ..Default::default()
+    })
+    .into()
+}
+
+fn divider<'a>() -> Element<'a, Message> {
+    container(Space::new().width(Length::Fill).height(1))
+        .style(|_theme| container::Style {
+            background: Some(CARD_BORDER.into()),
+            ..Default::default()
+        })
+        .into()
+}
+
+fn footer<'a>(timeout_secs: Option<u32>, elapsed_secs: u32) -> Element<'a, Message> {
+    let mut footer = row![
+        keycap("Enter"),
+        text("Allow").size(15).color(SUCCESS),
+        Space::new().width(16),
+        keycap("Esc"),
+        text("Deny").size(15).color(DANGER),
+    ]
+    .spacing(10)
+    .align_y(Alignment::Center);
 
     if let Some(timeout) = timeout_secs {
         let remaining = timeout.saturating_sub(elapsed_secs);
-        items.push(
+        let color = if remaining <= 5 { DANGER } else { TEXT_MUTED };
+        footer = footer.push(Space::new().width(Length::Fill)).push(
             text(format!("Auto-deny in {}s", remaining))
-                .size(24)
-                .color(theme.palette().danger)
-                .into(),
+                .size(14)
+                .font(Font::MONOSPACE)
+                .color(color),
         );
     }
 
-    items.push(actions.into());
-    items
+    footer.into()
 }
 
-fn ayu_dark_theme() -> Theme {
-    Theme::custom(
-        "Ayu Dark".to_string(),
-        Palette {
-            background: Color::from_rgb8(0x0B, 0x0E, 0x14),
-            text: Color::from_rgb8(0xBF, 0xBD, 0xB6),
-            primary: Color::from_rgb8(0xE6, 0xB4, 0x50),
-            success: Color::from_rgb8(0xAA, 0xD9, 0x4C),
-            danger: Color::from_rgb8(0xD9, 0x57, 0x57),
-            warning: Color::from_rgb8(0xE6, 0xB4, 0x50),
+fn keycap<'a>(label: &'static str) -> Element<'a, Message> {
+    container(text(label).size(13).font(Font::MONOSPACE).color(TEXT_BODY))
+        .padding([3, 9])
+        .style(|_theme| container::Style {
+            background: Some(KEYCAP_BG.into()),
+            border: iced::Border {
+                color: KEYCAP_BORDER,
+                width: 1.0,
+                radius: Radius::from(5.0),
+            },
+            ..Default::default()
+        })
+        .into()
+}
+
+fn card_style(_theme: &iced::Theme) -> container::Style {
+    container::Style {
+        background: Some(CARD_BG.into()),
+        border: iced::Border {
+            color: CARD_BORDER,
+            width: 1.0,
+            radius: Radius::from(12.0),
         },
-    )
+        shadow: iced::Shadow {
+            color: Color::from_rgba8(0, 0, 0, 0.45),
+            offset: iced::Vector::new(0.0, 12.0),
+            blur_radius: 48.0,
+        },
+        ..Default::default()
+    }
 }
